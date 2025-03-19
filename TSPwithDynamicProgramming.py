@@ -1,82 +1,90 @@
 def solve_tsp_dynamic(distances):
     n = len(distances)
-    # Initialize the memoization table with infinity
-    # dp[i][mask] represents the shortest path distance ending at city i and visiting cities in mask
     dp = {}
-    
-    # Set up the base case: distance from start (city 0) to each city
+
+    # Initialize base case
     for i in range(1, n):
         if distances[0][i] != float('inf'):
-            dp[(i, 1 << i)] = distances[0][i]
-    
-    # Iterate through all subsets of cities
+            dp[(i, 1 << i | 1)] = distances[0][i]  # Include city 0 in mask
+
+    # Solve for all subsets
     for mask in range(1, 1 << n):
-        # Skip if the subset doesn't include the starting city
-        if mask & (1 << 0) == 0:
+        if (mask & 1) == 0:  # Must include city 0
             continue
-            
+
         for end in range(n):
-            # Skip if the end city is not in the subset
             if (mask & (1 << end)) == 0:
                 continue
-                
-            # Skip if we're only looking at a single city
-            if mask == (1 << end):
-                continue
-                
-            # Calculate the subset without the end city
+
             prev_mask = mask & ~(1 << end)
-            
-            # Find the best path to the end city
             min_distance = float('inf')
+
             for prev in range(n):
                 if (prev_mask & (1 << prev)) == 0 or prev == end:
                     continue
                 if (prev, prev_mask) in dp and distances[prev][end] != float('inf'):
                     dist = dp[(prev, prev_mask)] + distances[prev][end]
                     min_distance = min(min_distance, dist)
-            
+
             if min_distance != float('inf'):
                 dp[(end, mask)] = min_distance
-    
-    # Find the shortest path that visits all cities and returns to the start
+
+    # Find shortest tour
     min_total_distance = float('inf')
     all_cities_mask = (1 << n) - 1
-    
-    for last_city in range(1, n):
-        if (last_city, all_cities_mask) in dp and distances[last_city][0] != float('inf'):
-            total_distance = dp[(last_city, all_cities_mask)] + distances[last_city][0]
-            min_total_distance = min(min_total_distance, total_distance)
-    
-    # Reconstruct the path
-    path = [0]  # Start with city 0
-    mask = all_cities_mask
-    current = None
-    
-    # Find the last city in the optimal path
+    last_city = -1
+
     for i in range(1, n):
-        if (i, mask) in dp and distances[i][0] != float('inf'):
-            if dp[(i, mask)] + distances[i][0] == min_total_distance:
-                current = i
-                break
-    
-    # Reconstruct the rest of the path backwards
-    path.append(current)
-    mask = mask & ~(1 << current)
-    
-    while mask > 1:  # Stop when only the starting city is left
+        if (i, all_cities_mask) in dp and distances[i][0] != float('inf'):
+            total_distance = dp[(i, all_cities_mask)] + distances[i][0]
+            if total_distance < min_total_distance:
+                min_total_distance = total_distance
+                last_city = i  # Store last city
+
+    if min_total_distance == float('inf'):
+        return [], float('inf')  # No valid tour
+
+    # ✅ FIX: Ensure last_city is valid before path reconstruction
+    if last_city == -1:
+        return [], float('inf')
+
+    # Reconstruct path
+    path = [0]
+    mask = all_cities_mask
+    current = last_city
+
+    while current != 0:
+        path.append(current)
+        prev_city = -1
+
         for i in range(n):
-            if (mask & (1 << i)) and (i, mask) in dp and distances[i][current] != float('inf'):
-                if dp[(i, mask)] + distances[i][current] == dp[(current, mask | (1 << current))]:
-                    path.append(i)
-                    mask = mask & ~(1 << i)
-                    current = i
+            if (mask & (1 << i)) and i != current and (i, mask & ~(1 << current)) in dp:
+                if dp[(i, mask & ~(1 << current))] + distances[i][current] == dp[(current, mask)]:
+                    prev_city = i
                     break
-    
-    path.append(0)  # Return to the starting city
-    path.reverse()  # Reverse to get the correct order
-    
-    # Convert to 1-indexed for output
-    path_1_indexed = [p + 1 for p in path]
-    
-    return path_1_indexed, min_total_distance
+
+        mask = mask & ~(1 << current)
+        current = prev_city
+
+        # ✅ FIX: If prev_city remains -1, break to avoid infinite loop
+        if prev_city == -1:
+            break
+
+    path.append(0)
+    path.reverse()
+    return [p + 1 for p in path], min_total_distance
+
+# Adjacency matrix representation
+distances = [
+    [0, 10, 12, float('inf'), float('inf'), float('inf'), 12],
+    [10, 0, 8, 12, float('inf'), float('inf'), float('inf')],
+    [12, 8, 0, 11, 3, float('inf'), 9],
+    [float('inf'), 12, 11, 0, 11, 10, float('inf')],
+    [float('inf'), float('inf'), 3, 11, 0, 6, 7],
+    [float('inf'), float('inf'), float('inf'), 10, 6, 0, 9],
+    [12, float('inf'), 9, float('inf'), 7, 9, 0]
+]
+
+path, min_distance = solve_tsp_dynamic(distances)
+print("Optimal Path:", path)
+print("Minimum Distance:", min_distance)
