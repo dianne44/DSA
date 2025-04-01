@@ -12,9 +12,9 @@ distances = np.array([
     [12, np.inf, 9, np.inf, 7, 9, 0]
 ])
 
-num_cities = distances.shape[0]
-num_neurons = num_cities * 2  
-iterations = 5000
+num_cities = distances.shape[0] #This determines the number of cities from the adjacency matrix distances.
+num_neurons = num_cities * 2 #This sets the number of neurons in the Self-Organizing Map (SOM). 
+iterations = 5000 #This sets the number of training iterations for the SOM algorithm.
 learning_rate = 0.8
 neighborhood_size = num_neurons // 2
 
@@ -78,18 +78,18 @@ for city in missing_cities:
     if best_position is not None:
         final_route.insert(best_position, city)
     else:
-        print(f"⚠️ WARNING: City {city} could not be inserted due to missing connections!")
+        print(f" WARNING: City {city} could not be inserted due to missing connections!")
 
-# 🚨 Ensure city 6 is in the route
+#  Ensure city 6 is in the route
 if 6 not in final_route:
-    print("⚠️ WARNING: City 6 is missing! Forcing it into the route.")
+    print(" WARNING: City 6 is missing! Forcing it into the route.")
     final_route.append(6)
 
 # Ensure the route forms a cycle
 if final_route[0] != final_route[-1]:
     final_route.append(final_route[0])
 
-# 🚨 Validate route connections
+#  Validate route connections
 valid_route = True
 for i in range(len(final_route) - 1):
     d = distances[final_route[i], final_route[i+1]]
@@ -98,7 +98,7 @@ for i in range(len(final_route) - 1):
     if d == np.inf:
         valid_route = False
 
-# 🚨 If invalid, regenerate using Nearest-Neighbor heuristic
+#  If invalid, regenerate using Nearest-Neighbor heuristic
 if not valid_route:
     print("Invalid route detected! Using Nearest Neighbor...")
     unvisited = set(range(1, num_cities))
