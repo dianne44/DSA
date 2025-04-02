@@ -18,7 +18,7 @@ iterations = 5000 #This sets the number of training iterations for the SOM algor
 learning_rate = 0.8
 neighborhood_size = num_neurons // 2
 
-# Initialize neurons randomly
+#Assign neurons randomly to cities
 neurons = np.random.choice(num_cities, num_neurons, replace=True)
 
 # Gaussian neighborhood function
